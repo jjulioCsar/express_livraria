@@ -24,6 +24,8 @@ app.use('/livros', livroRoutes);
 
 app.use('/funcionarios', funcionarioRoutes )
 
+app.use('/clientes', clienteRoutes)
+
 app.get('/', (req, res) => {
     res.send('Olá, Mundo!');
 });

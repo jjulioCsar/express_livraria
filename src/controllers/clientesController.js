@@ -9,10 +9,10 @@ export const getCliente = (req, res) => {
             res.status(500).json({ msg: "Erro ao buscar cliente" });
             return console.log(err);
         }
-        const Cliente = data;
+        const cliente = data;
         console.log(data);
         console.log(typeof data);
-        res.status(200).json(Cliente);
+        res.status(200).json(cliente);
     });
 };
 
@@ -24,22 +24,22 @@ export const cadastrarCliente = (req, res) => {
         return res.status(400).json({msg: "O nome é obrigatorio"});
     }
     if(!email){
-        return res.status(400).json({msg: "O cargo é obrigatorio"});
-    }
-    if(!email){
         return res.status(400).json({msg: "O email é obrigatorio"});
     }
+    if(!senha){
+        return res.status(400).json({msg: "A senha é obrigatoria"});
+    }
     if(!imagem){
-        return res.status(400).json({msg: "O salario é obrigatorio"});
+        return res.status(400).json({msg: "A imagem é obrigatoria"});
     }
 
-    //cadastrar um funcionario -> antes preciso saber se esse funcionario existe
+    //cadastrar um cliente -> antes preciso saber se esse funcionario existe
     const checkSql = /*sql*/ `SELECT * FROM Clientes WHERE nome = "${nome}" AND email = "${email}" AND senha = "${senha}"`;
     
     conn.query(checkSql, (err, data) =>{
         if (err) {
             res.status(500).json({msg: "Erro ao buscar o cliente"});
-            return console.log(err);
+            returClienteog(err);
         }
 
         if (data.length > 0) {
@@ -64,7 +64,7 @@ export const cadastrarCliente = (req, res) => {
     });
 };
 
-export const buscarFuncionario = (req, res) => {
+export const buscarCliente = (req, res) => {
     const { id } = req.params;
 
     const sql = `SELECT * FROM Clientes WHERE id = ?`;
@@ -76,75 +76,73 @@ export const buscarFuncionario = (req, res) => {
         }
 
         if (data.length === 0) {
-            res.status(404).json({ msg: "Funcionario não encontrado" });
+            res.status(404).json({ msg: "Cliente não encontrado" });
             return;
         }
         
-        const funcionario = data[0]
-        res.status(200).json(funcionario);
+        const cliente = data[0]
+        res.status(200).json(cliente);
     });
 };
 
-export const editarFuncionario = (req, res) => {
+export const editarCliente = (req, res) => {
     const { id } = req.params;
-        const { nome, cargo, data_contratacao, email, salario } = req.body;
+        const { nome, email, senha, imagem } = req.body;
     
         //validações
         if (!nome) {
             return res.status(400).json({ msg: "O nome é obrigatório" });
         }
-        if (!cargo) {
-            return res.status(400).json({ msg: "O cargo é obrigatório" });
-        }
-        if (!data_contratacao) {
-            return res.status(400).json({ msg: "A data de contratação é obrigatória" });
-        }
         if (!email) {
             return res.status(400).json({ msg: "O email é obrigatório" });
         }
-        if (!salario) {
-            return res.status(400).json({ msg: "O salario é obrigatório" });
+        if (!senha) {
+            return res.status(400).json({ msg: "A senha é obrigatória" });
         }
+        if (!imagem) {
+            return res.status(400).json({ msg: "A imagem é obrigatória" });
+        }
+        
     
-        const checkSql = `SELECT * FROM Funcionarios WHERE id = "${id}"`;
+        const checkSql = `SELECT * FROM Clientes WHERE id = "${id}"`;
         conn.query(checkSql, (err, data) => {
             if (err) {
                 console.error(err);
-                return res.status(500).json({ msg: "Erro ao buscar funcionários" });
+                return res.status(500).json({ msg: "Erro ao buscar clientes" });
             }
     
             if (data.length === 0) {
-                return res.status(404).json({ msg: "Funcionário não encontrado" });
+                return res.status(404).json({ msg: "Cliente não encontrado" });
             }
     
-            // Consulta SQL para atualizar funcionário
-            const updateSql = `UPDATE Funcionarios SET 
-                nome = "${nome}", cargo = "${cargo}", data_contratacao = "${data_contratacao}", email = "${email}", salario = "${salario}"
+            // Consulta SQL para atualizar cliente
+            const updateSql = `UPDATE Clientes SET 
+                nome = "${nome}", email = "${email}", senha = "${senha}", imagem = "${imagem}"
                 WHERE id = "${id}"`;
     
             conn.query(updateSql, (err) => {
                 if (err) {
                     console.error(err);
-                    return res.status(500).json({ msg: "Erro ao atualizar funcionário" });
+                    return res.status(500).json({ msg: "Erro ao atualizar cliente" });
                 }
-                res.status(200).json({ msg: "Funcionário atualizado" });
+                res.status(200).json({ msg: "Cliente atualizado" });
             });
         });
 };
 
-export const deletarFuncionario = (req, res) => {
+export const deletarCliente = (req, res) => {
     const {id} = req.params;
     
-        const deleteSql = /*sql*/ `DELETE FROM Funcionarios WHERE id = ?`
+        const deleteSql = /*sql*/ `DELETE FROM Clientes WHERE id = ?`
         conn.query(deleteSql, [id], (err, info)=>{
             if(err){
-                res.status().json({msg:"Erro ao encontrar o funcionario"})
+                res.status().json({msg:"Erro ao encontrar o cliente"})
                 return
             }
             if(info.affectedRows === 0){
-                res.status(404).json({msg: "Erro ao deletar o Funcionario escolhido"})
+                res.status(404).json({msg: "Erro ao deletar o cliente escolhido"})
                 return
             }
-            res.status(200).json({msg:"Funcionario deletado com sucesso"})
+            res.status(200).json({msg:"Cliente deletado com sucesso"})
         })
 };
