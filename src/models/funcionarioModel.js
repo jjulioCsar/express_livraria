@@ -2,7 +2,7 @@ import conn from "../config/conn.js";
 
 const tableFuncionario = /*sql*/ `
 create table if not exists Funcionarios(
-id varchar(60) primary key,
+funcionario_id varchar(60) primary key,
 nome varchar(255) not null,
 cargo varchar(255) not null,
 data_contratacao date not null,

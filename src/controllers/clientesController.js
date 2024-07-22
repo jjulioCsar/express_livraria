@@ -2,64 +2,54 @@ import conn from "../config/conn.js";
 import { v4 as uuidv4 } from "uuid";
 
 export const getCliente = (req, res) => {
-    const sql = /*sql*/ `SELECT * FROM Clientes`;
+    const sql = `SELECT * FROM Clientes`;
 
     conn.query(sql, (err, data) => {
         if (err) {
             res.status(500).json({ msg: "Erro ao buscar cliente" });
-            return console.log(err);
+            console.log(err);
+            return;
         }
-        const cliente = data;
-        console.log(data);
-        console.log(typeof data);
-        res.status(200).json(cliente);
+        res.status(200).json(data);
     });
 };
 
 export const cadastrarCliente = (req, res) => {
-    const {nome, email, senha, imagem} = req.body;
+    const { nome, email, senha, imagem } = req.body;
 
-    //validações
-    if(!nome){
-        return res.status(400).json({msg: "O nome é obrigatorio"});
-    }
-    if(!email){
-        return res.status(400).json({msg: "O email é obrigatorio"});
-    }
-    if(!senha){
-        return res.status(400).json({msg: "A senha é obrigatoria"});
-    }
-    if(!imagem){
-        return res.status(400).json({msg: "A imagem é obrigatoria"});
-    }
+    // Validações
+    if (!nome) return res.status(400).json({ msg: "O nome é obrigatório" });
+    if (!email) return res.status(400).json({ msg: "O email é obrigatório" });
+    if (!senha) return res.status(400).json({ msg: "A senha é obrigatória" });
+    if (!imagem) return res.status(400).json({ msg: "A imagem é obrigatória" });
 
-    //cadastrar um cliente -> antes preciso saber se esse funcionario existe
-    const checkSql = /*sql*/ `SELECT * FROM Clientes WHERE nome = "${nome}" AND email = "${email}" AND senha = "${senha}"`;
-    
-    conn.query(checkSql, (err, data) =>{
+    // Verificar se o cliente já existe
+    const checkSql = `SELECT * FROM Clientes WHERE nome = ? AND email = ? AND senha = ?`;
+    const checkValues = [nome, email, senha];
+
+    conn.query(checkSql, checkValues, (err, data) => {
         if (err) {
-            res.status(500).json({msg: "Erro ao buscar o cliente"});
-            returClienteog(err);
+            res.status(500).json({ msg: "Erro ao buscar o cliente" });
+            console.log(err);
+            return;
         }
 
         if (data.length > 0) {
-            res.status(409).json({msg: "O cliente já existe no banco de dados"});
-            return console.log(err);
+            res.status(409).json({ msg: "O cliente já existe no banco de dados" });
+            return;
         }
 
         const id = uuidv4();
+        const insertSQL = `INSERT INTO Clientes (cliente_id, nome, email, senha, imagem) VALUES (?, ?, ?, ?, ?)`;
+        const insertValues = [id, nome, email, senha, imagem];
 
-        const insertSQL = /*sql*/ `INSERT INTO Clientes
-        (id, nome, email, senha, imagem)
-        VALUES
-        ("${id}","${nome}", "${email}", "${senha}", "${imagem}")`;
-
-        conn.query(insertSQL, (err) => {
+        conn.query(insertSQL, insertValues, (err) => {
             if (err) {
-                res.status(500).json({msg: "Erro ao cadastrar o cliente"});
-                return console.log(err);
+                res.status(500).json({ msg: "Erro ao cadastrar o cliente" });
+                console.log(err);
+                return;
             }
-            res.status(200).json({msg:"Cliente cadastrado"});
+            res.status(200).json({ msg: "Cliente cadastrado com sucesso", id });
         });
     });
 };
@@ -67,11 +57,11 @@ export const cadastrarCliente = (req, res) => {
 export const buscarCliente = (req, res) => {
     const { id } = req.params;
 
-    const sql = `SELECT * FROM Clientes WHERE id = ?`;
+    const sql = `SELECT * FROM Clientes WHERE cliente_id = ?`;
     conn.query(sql, [id], (err, data) => {
         if (err) {
             console.error(err);
-            res.status(500).json({ msg: "Erro ao buscar o Clientes" });
+            res.status(500).json({ msg: "Erro ao buscar o cliente" });
             return;
         }
 
@@ -79,70 +69,59 @@ export const buscarCliente = (req, res) => {
             res.status(404).json({ msg: "Cliente não encontrado" });
             return;
         }
-        
-        const cliente = data[0]
-        res.status(200).json(cliente);
+
+        res.status(200).json(data[0]);
     });
 };
 
 export const editarCliente = (req, res) => {
     const { id } = req.params;
-        const { nome, email, senha, imagem } = req.body;
-    
-        //validações
-        if (!nome) {
-            return res.status(400).json({ msg: "O nome é obrigatório" });
+    const { nome, email, senha, imagem } = req.body;
+
+    // Validações
+    if (!nome) return res.status(400).json({ msg: "O nome é obrigatório" });
+    if (!email) return res.status(400).json({ msg: "O email é obrigatório" });
+    if (!senha) return res.status(400).json({ msg: "A senha é obrigatória" });
+    if (!imagem) return res.status(400).json({ msg: "A imagem é obrigatória" });
+
+    const checkSql = `SELECT * FROM Clientes WHERE cliente_id = ?`;
+    conn.query(checkSql, [id], (err, data) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ msg: "Erro ao buscar clientes" });
         }
-        if (!email) {
-            return res.status(400).json({ msg: "O email é obrigatório" });
+
+        if (data.length === 0) {
+            return res.status(404).json({ msg: "Cliente não encontrado" });
         }
-        if (!senha) {
-            return res.status(400).json({ msg: "A senha é obrigatória" });
-        }
-        if (!imagem) {
-            return res.status(400).json({ msg: "A imagem é obrigatória" });
-        }
-        
-    
-        const checkSql = `SELECT * FROM Clientes WHERE id = "${id}"`;
-        conn.query(checkSql, (err, data) => {
+
+        // Consulta SQL para atualizar cliente
+        const updateSql = `UPDATE Clientes SET nome = ?, email = ?, senha = ?, imagem = ? WHERE cliente_id = ?`;
+        const updateValues = [nome, email, senha, imagem, id];
+
+        conn.query(updateSql, updateValues, (err) => {
             if (err) {
                 console.error(err);
-                return res.status(500).json({ msg: "Erro ao buscar clientes" });
+                return res.status(500).json({ msg: "Erro ao atualizar cliente" });
             }
-    
-            if (data.length === 0) {
-                return res.status(404).json({ msg: "Cliente não encontrado" });
-            }
-    
-            // Consulta SQL para atualizar cliente
-            const updateSql = `UPDATE Clientes SET 
-                nome = "${nome}", email = "${email}", senha = "${senha}", imagem = "${imagem}"
-                WHERE id = "${id}"`;
-    
-            conn.query(updateSql, (err) => {
-                if (err) {
-                    console.error(err);
-                    return res.status(500).json({ msg: "Erro ao atualizar cliente" });
-                }
-                res.status(200).json({ msg: "Cliente atualizado" });
-            });
+            res.status(200).json({ msg: "Cliente atualizado com sucesso" });
         });
+    });
 };
 
 export const deletarCliente = (req, res) => {
-    const {id} = req.params;
-    
-        const deleteSql = /*sql*/ `DELETE FROM Clientes WHERE id = ?`
-        conn.query(deleteSql, [id], (err, info)=>{
-            if(err){
-                res.status().json({msg:"Erro ao encontrar o cliente"})
-                return
-            }
-            if(info.affectedRows === 0){
-                res.status(404).json({msg: "Erro ao deletar o cliente escolhido"})
-                return
-            }
-            res.status(200).json({msg:"Cliente deletado com sucesso"})
-        })
+    const { id } = req.params;
+
+    const deleteSql = `DELETE FROM Clientes WHERE cliente_id = ?`;
+    conn.query(deleteSql, [id], (err, info) => {
+        if (err) {
+            res.status(500).json({ msg: "Erro ao deletar o cliente" });
+            return;
+        }
+        if (info.affectedRows === 0) {
+            res.status(404).json({ msg: "Cliente não encontrado" });
+            return;
+        }
+        res.status(200).json({ msg: "Cliente deletado com sucesso" });
+    });
 };
